@@ -15,7 +15,7 @@
    http://mirror.klaus-uwe.me/apache/maven/maven-3/3.5.0/binaries/apache-maven-3.5.0-bin.zip
    Copy content of zip to e.g. C:\Tools\apache-maven-3.5.0
    
-*) Build MQTT Driver
+*) Build Driver
    set PATH=%PATH%;C:\Tools\apache-maven-3.5.0
    set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_131
    set PROJ_HOME=C:\WinCC_OA_Proj\<project>
