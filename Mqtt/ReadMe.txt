@@ -40,6 +40,8 @@
 
 + Create some datapoint and add a peripherial address config "Sample Driver" to it
      - Reference: e.g. "rpi2/temp" => mqtt tag name
+       - if JSON is used you can add the json-key which holds the value
+       - e.g. rpi2/temp$Speed => { "Speed": 120 }
      - Driver-Number: 2 => the number of your java driver (-num 2)
      - Transformation: Float => values in mqtt can be stored as a json document "{Value: 5.2132412}"
      - Subindex: 0 => not used
