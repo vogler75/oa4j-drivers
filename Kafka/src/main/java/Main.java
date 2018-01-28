@@ -222,16 +222,16 @@ public class Main {
         }
 
         @Override
-        protected byte[] toPeriph_(String val) { return toPeriph(val); }
-        public static byte[] toPeriph(String val) {
+        protected byte[] toPeriph(String val) { return toPeriphStatic(val); }
+        public static byte[] toPeriphStatic(String val) {
             JSONObject json = new JSONObject();
             json.put("Value", val);
             return json.toJSONString().getBytes();
         }
 
         @Override
-        protected String toVal_(byte[] data) { return toVal(data); }
-        public static String toVal(byte[] data) throws IllegalArgumentException {
+        protected String toVal(byte[] data) { return toValStatic(data); }
+        public static String toValStatic(byte[] data) throws IllegalArgumentException {
             JSONObject json = (JSONObject)JSONValue.parse(new String(data));
             Object val = json.get("Value");
             if ( val instanceof String )
@@ -251,16 +251,16 @@ public class Main {
         }
 
         @Override
-        protected byte[] toPeriph_(Double val) { return toPeriph(val); }
-        public static byte[] toPeriph(Double val) {
+        protected byte[] toPeriph(Double val) { return toPeriphStatic(val); }
+        public static byte[] toPeriphStatic(Double val) {
             JSONObject json = new JSONObject();
             json.put("Value", val);
             return json.toJSONString().getBytes();
         }
 
         @Override
-        protected Double toVal_(byte[] data) { return toVal(data); }
-        public static Double toVal(byte[] data) throws IllegalArgumentException {
+        protected Double toVal(byte[] data) { return toValStatic(data); }
+        public static Double toValStatic(byte[] data) throws IllegalArgumentException {
             JSONObject json = (JSONObject) JSONValue.parse(new String(data));
             Object val = json.get("Value");
             if (val == null) {
@@ -284,16 +284,16 @@ public class Main {
         }
 
         @Override
-        protected byte[] toPeriph_(Integer val) { return toPeriph(val); }
-        public static byte[] toPeriph(Integer val) {
+        protected byte[] toPeriph(Integer val) { return toPeriphStatic(val); }
+        public static byte[] toPeriphStatic(Integer val) {
             JSONObject json = new JSONObject();
             json.put("Value", val);
             return json.toJSONString().getBytes();
         }
 
         @Override
-        protected Integer toVal_(byte[] data) { return toVal(data); }
-        public static Integer toVal(byte[] data) throws IllegalArgumentException {
+        protected Integer toVal(byte[] data) { return toValStatic(data); }
+        public static Integer toValStatic(byte[] data) throws IllegalArgumentException {
             JSONObject json = (JSONObject)JSONValue.parse(new String(data));
             Object val = json.get("Value");
             if ( val instanceof Long )

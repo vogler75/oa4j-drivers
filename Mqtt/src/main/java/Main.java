@@ -1,4 +1,7 @@
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 
 import at.rocworks.oa4j.driver.*;
@@ -140,15 +143,16 @@ public class Main {
                 byte[] bytes;
                 if ( json ) {
                     JSONObject json = new JSONObject();
+                    String valueKey = "Value";
 
                     // add the time to the message
                     json.put("TimeMS", item.getTime().getTime());
 
                     // we have to decode the raw/byte data and encode it again
                     switch ( item.getTransTypeNr() ) {
-                        case 1000: json.put("Value", JTransTextVarJson.toVal(item.getData())); break;
-                        case 1001: json.put("Value", JTransIntegerVarJson.toVal(item.getData())); break;
-                        case 1002: json.put("Value", JTransFloatVarJson.toVal(item.getData())); break;
+                        case 1000: json.put(valueKey, JTransTextVar.toValStatic(item.getData())); break;
+                        case 1001: json.put(valueKey, JTransIntegerVar.toValStatic(item.getData())); break;
+                        case 1002: json.put(valueKey, JTransFloatVar.toValStatic(item.getData())); break;
                     }
                     bytes = json.toJSONString().getBytes();
                     //JDebug.out.info("sendOutput "+json.toJSONString());
@@ -176,12 +180,21 @@ public class Main {
             JDebug.out.info("disconnect to mqtt...done");
         }
 
+        private final HashMap<String, Set<String>> addrConvert = new HashMap<>(); // Addr, Addr-Para
+
+
         @Override
         public boolean attachInput(String addr) {
             if ( mqtt != null && mqtt.isConnected() ) {
                 try {
                     JDebug.out.log(Level.INFO, "attachInput addr={0} ... subscribe", new Object[]{addr});
-                    mqtt.subscribe(addr);
+
+                    String[] keys = addr.split("\\$");
+                    Set<String> xs = addrConvert.getOrDefault(keys[0], new HashSet<String>());
+                    xs.add(addr);
+                    addrConvert.put(keys[0], xs);
+
+                    mqtt.subscribe(keys[0]);
                     return true;
                 } catch (MqttException ex) {
                     JDebug.StackTrace(Level.SEVERE, ex);
@@ -197,7 +210,16 @@ public class Main {
             if ( mqtt != null && mqtt.isConnected() ) {
                 try {
                     JDebug.out.log(Level.INFO, "detachInput addr={0} ... unsubscribe", new Object[]{addr});
-                    mqtt.unsubscribe(addr);
+
+                    String[] keys = addr.split("\\$");
+                    Set<String> xs = addrConvert.getOrDefault(keys[0], new HashSet<String>());
+                    xs.remove(addr);
+                    if (xs.size()>0)
+                        addrConvert.put(keys[0], xs);
+                    else
+                        addrConvert.remove(keys[0]);
+
+                    mqtt.unsubscribe(keys[0]);
                     return true;
                 } catch (MqttException ex) {
                     JDebug.StackTrace(Level.SEVERE, ex);
@@ -251,9 +273,15 @@ public class Main {
                         }
                         JSONObject json = (JSONObject)obj;
                         Long ms = (Long) json.getOrDefault("TimeMS", 0L);
-                        JDriverItem item = ms == 0 ? new JDriverItem(tag, mm.getPayload())
-                                : new JDriverItem(tag, mm.getPayload(), new Date(ms));
-                        sendInputBlock(new JDriverItemList(item));
+
+                        Set<String> addrs = addrConvert.getOrDefault(tag, new HashSet<String>());
+                        JDriverItemList block = new JDriverItemList();
+                        addrs.forEach((addr)->{
+                            JDriverItem item = ms == 0 ? new JDriverItem(addr, mm.getPayload())
+                                    : new JDriverItem(addr, mm.getPayload(), new Date(ms));
+                            block.addItem(item);
+                        });
+                        sendInputBlock(block);
                     } catch ( Exception ex ) {
                         JDebug.out.log(Level.INFO, "{0} => \"{1}\"", new Object[]{tag, msg});
                         JDebug.StackTrace(Level.WARNING, ex);
@@ -281,24 +309,18 @@ public class Main {
 
     public static class JTransTextVarJson extends JTransTextVar {
         private static final int SIZE=4096;
+        private String valueKey = "Value";
 
         public JTransTextVarJson(String name, int type) {
             super(name, type, SIZE);
+            String[] keys = name.split("\\$");
+            if (keys.length>1) valueKey=keys[1];
         }
 
         @Override
-        protected byte[] toPeriph_(String val) { return toPeriph(val); }
-        public static byte[] toPeriph(String val) {
-            JSONObject json = new JSONObject();
-            json.put("Value", val);
-            return json.toJSONString().getBytes();
-        }
-
-        @Override
-        protected String toVal_(byte[] data) { return toVal(data); }
-        public static String toVal(byte[] data) throws IllegalArgumentException {
+        protected String toVal(byte[] data) throws IllegalArgumentException {
             JSONObject json = (JSONObject)JSONValue.parse(new String(data));
-            Object val = json.get("Value");
+            Object val = json.get(valueKey);
             if ( val instanceof String )
                 return (String)val;
             else {
@@ -310,24 +332,18 @@ public class Main {
     public static class JTransFloatVarJson extends JTransFloatVar {
 
         private static final int SIZE=1024;
+        private String valueKey = "Value";
 
         public JTransFloatVarJson(String name, int type) {
             super(name, type, SIZE);
+            String[] keys = name.split("\\$");
+            if (keys.length>1) valueKey=keys[1];
         }
 
         @Override
-        protected byte[] toPeriph_(Double val) { return toPeriph(val); }
-        public static byte[] toPeriph(Double val) {
-            JSONObject json = new JSONObject();
-            json.put("Value", val);
-            return json.toJSONString().getBytes();
-        }
-
-        @Override
-        protected Double toVal_(byte[] data) { return toVal(data); }
-        public static Double toVal(byte[] data) throws IllegalArgumentException {
+        protected Double toVal(byte[] data) throws IllegalArgumentException {
             JSONObject json = (JSONObject) JSONValue.parse(new String(data));
-            Object val = json.get("Value");
+            Object val = json.get(valueKey);
             if (val == null) {
                 throw new IllegalArgumentException("no key \"Value\" in json object!");
             } else if (val instanceof Double) {
@@ -343,24 +359,18 @@ public class Main {
 
     public static class JTransIntegerVarJson extends JTransIntegerVar {
         private static final int SIZE=1024;
+        private String valueKey = "Value";
 
         public JTransIntegerVarJson(String name, int type) {
             super(name, type, SIZE);
+            String[] keys = name.split("\\$");
+            if (keys.length>1) valueKey=keys[1];
         }
 
         @Override
-        protected byte[] toPeriph_(Integer val) { return toPeriph(val); }
-        public static byte[] toPeriph(Integer val) {
-            JSONObject json = new JSONObject();
-            json.put("Value", val);
-            return json.toJSONString().getBytes();
-        }
-
-        @Override
-        protected Integer toVal_(byte[] data) { return toVal(data); }
-        public static Integer toVal(byte[] data) throws IllegalArgumentException {
+        protected Integer toVal(byte[] data) throws IllegalArgumentException {
             JSONObject json = (JSONObject)JSONValue.parse(new String(data));
-            Object val = json.get("Value");
+            Object val = json.get(valueKey);
             if ( val instanceof Long )
                 return ((Long)val).intValue();
             else {

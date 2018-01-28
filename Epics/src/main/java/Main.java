@@ -178,15 +178,15 @@ public class Main {
                 this.name=name;            
                 if ( dbr.getType() == DBRType.DOUBLE ) {
                     double[] value = ((DOUBLE) dbr).getDoubleValue();
-                    data = JTransFloatVar.toPeriph(value[0]);
+                    data = JTransFloatVar.toPeriphStatic(value[0]);
 //                    JDebug.out.info(this.name+": "+value[0]+" "+value.length);
                 } else if ( dbr.getType() == DBRType.INT ) {
                     int[] value = ((INT) dbr).getIntValue();
-                    data = JTransIntegerVar.toPeriph(value[0]);
+                    data = JTransIntegerVar.toPeriphStatic(value[0]);
 //                    JDebug.out.info(this.name+": "+value[0]+" "+value.length);
                 } else if ( dbr.getType() == DBRType.STRING ) {
                     String[] value = ((STRING) dbr).getStringValue();
-                    data = JTransTextVar.toPeriph(value[0]); 
+                    data = JTransTextVar.toPeriphStatic(value[0]);
 //                    JDebug.out.info(this.name+": "+value[0]+" "+value.length);
                 } else {
                     JDebug.out.log(Level.WARNING, "MyDriverItem dbr-type {0} unhandled!", dbr.getType());
@@ -197,13 +197,13 @@ public class Main {
                 if (channel == null || channel.getConnectionState() != Channel.CONNECTED) 
                     return false;
                 if ( channel.getFieldType() == DBRType.DOUBLE ) {
-                    Double val = JTransFloatVar.toVal(this.getData());
+                    Double val = JTransFloatVar.toValStatic(this.getData());
                     channel.put(val);
                 } else if ( channel.getFieldType() == DBRType.INT ) {
-                    Integer val = JTransIntegerVar.toVal(this.getData());
+                    Integer val = JTransIntegerVar.toValStatic(this.getData());
                     channel.put(val);
                 } else if ( channel.getFieldType() == DBRType.STRING ) {
-                    String val = JTransTextVar.toVal(this.getData());
+                    String val = JTransTextVar.toValStatic(this.getData());
                     channel.put(val);
                 } else {
                     JDebug.out.log(Level.WARNING, "MyDriverItem dbr-type {0} unhandled!", channel.getFieldType());
