@@ -188,13 +188,11 @@ public class Main {
             if ( mqtt != null && mqtt.isConnected() ) {
                 try {
                     JDebug.out.log(Level.INFO, "attachInput addr={0} ... subscribe", new Object[]{addr});
-
                     String[] keys = addr.split("\\$");
                     Set<String> xs = addrConvert.getOrDefault(keys[0], new HashSet<String>());
                     xs.add(addr);
                     addrConvert.put(keys[0], xs);
-
-                    mqtt.subscribe(keys[0]);
+                    if (xs.size()==1) mqtt.subscribe(keys[0]);
                     return true;
                 } catch (MqttException ex) {
                     JDebug.StackTrace(Level.SEVERE, ex);
@@ -219,7 +217,7 @@ public class Main {
                     else
                         addrConvert.remove(keys[0]);
 
-                    mqtt.unsubscribe(keys[0]);
+                    if (xs.size()==0) mqtt.unsubscribe(keys[0]);
                     return true;
                 } catch (MqttException ex) {
                     JDebug.StackTrace(Level.SEVERE, ex);
